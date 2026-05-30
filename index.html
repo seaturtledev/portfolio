@@ -721,11 +721,13 @@ gsap.fromTo('.proj-entry',{opacity:0,y:40},{
   scrollTrigger:{trigger:'.projects-grid',start:'top 75%',once:true}
 });
 ScrollTrigger.create({
-  trigger:'.projects',start:'top 60%',end:'bottom 40%',
-  onEnter:()=>gsap.to('.dot-nav',{opacity:1,duration:0.5}),
-  onLeave:()=>gsap.to('.dot-nav',{opacity:0,duration:0.5}),
-  onEnterBack:()=>gsap.to('.dot-nav',{opacity:1,duration:0.5}),
-  onLeaveBack:()=>gsap.to('.dot-nav',{opacity:0,duration:0.5})
+  trigger:'.projects-grid',
+  start:'top top',
+  end:'bottom bottom',
+  onEnter:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
+  onLeave:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4}),
+  onEnterBack:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
+  onLeaveBack:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4})
 });
 
 /* ---- Left panel: pill cursor + click-to-open-modal ---- */
