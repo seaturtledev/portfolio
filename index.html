@@ -31,10 +31,12 @@
     font-weight:300; line-height:1.6; overflow-x:hidden; cursor:none;
     -webkit-font-smoothing:antialiased;
   }
-  ::-webkit-scrollbar{ width:2px; }
-  ::-webkit-scrollbar-track{ background:transparent; }
-  ::-webkit-scrollbar-thumb{ background:var(--blue); }
-  html{ scrollbar-width:thin; scrollbar-color:var(--blue) transparent; }
+
+  /* ---- hide browser scrollbar ---- */
+  ::-webkit-scrollbar{ display:none; }
+  html{ scrollbar-width:none; }
+  body{ -ms-overflow-style:none; }
+
   a,button{ cursor:none; }
   ::selection{ background:rgba(91,156,246,.3); color:var(--fg); }
 
@@ -72,6 +74,40 @@
   }
   @media(hover:none){ .cursor-dot,.cursor-ring{ display:none; } body,a,button{ cursor:auto; } }
 
+  /* ---------- Custom scroll indicator ---------- */
+  #scrollBar{
+    position:fixed; right:5px; top:88px; bottom:28px;
+    width:44px; z-index:90; pointer-events:none;
+    opacity:0; transition:opacity .4s var(--ease);
+  }
+  #scrollBar.visible{ opacity:1; }
+  #scrollThumb{
+    position:absolute; right:0;
+    width:44px; height:52px;
+    pointer-events:all; cursor:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #scrollThumbLine{
+    width:1.5px; height:100%; border-radius:2px;
+    background:rgba(234,229,221,.38);
+    transition:width .2s var(--ease), background .2s var(--ease);
+    pointer-events:none;
+  }
+  #scrollThumb.wide #scrollThumbLine{
+    width:3px; background:rgba(234,229,221,.72);
+  }
+  #scrollLabel{
+    position:absolute; right:calc(100% + 5px); top:50%;
+    transform:translateY(-50%);
+    font-family:var(--sans); font-size:.62rem; letter-spacing:.22em;
+    text-transform:uppercase; color:rgba(234,229,221,.38);
+    white-space:nowrap;
+    transition:color .25s var(--ease);
+    pointer-events:none; user-select:none;
+  }
+  #scrollThumb.wide #scrollLabel{ color:rgba(234,229,221,.82); }
+  @media(max-width:640px){ #scrollBar{ display:none; } }
+
   /* ---------- Nav ---------- */
   nav{
     position:fixed; top:0; left:0; width:100%; z-index:100;
@@ -106,7 +142,7 @@
   .hero{
     position:relative; height:100vh; min-height:560px;
     display:flex; flex-direction:column; justify-content:center;
-    padding:92px 48px 120px; overflow:hidden;
+    padding:92px 48px 120px; overflow:clip;
   }
   .orb{ position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none; }
   .orb-blue{ width:520px; height:520px; background:var(--blue); top:-160px; right:-120px; opacity:.32; }
@@ -151,8 +187,8 @@
   @keyframes pulseLine{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
   @media(max-width:640px){ .hero{ padding:0 24px; } .hero-ctas{ flex-direction:column; align-items:flex-start; } }
 
-  /* ---------- Interlude ---------- */
-  .interlude{ position:relative; height:520vh; }
+  /* ---------- Interlude — height reduced so it scrolls faster ---------- */
+  .interlude{ position:relative; height:300vh; }
   .interlude-sticky{
     position:sticky; top:0; height:100vh; overflow:hidden;
     display:flex; align-items:center; justify-content:center; padding:96px 48px 64px;
@@ -204,7 +240,6 @@
   .pv-lines::before,.pv-lines::after{ content:""; position:absolute; background:rgba(234,229,221,.08); }
   .pv-lines::before{ left:14%; top:0; bottom:0; width:1px; }
   .pv-lines::after{ top:30%; left:0; right:0; height:1px; }
-  /* emoji hidden */
   .pv-emoji{ display:none; }
 
   .proj-meta{ position:relative; }
@@ -216,10 +251,9 @@
   .pm-result .val{ font-family:var(--serif); font-size:1.1rem; color:var(--fg); }
   .pm-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
   .pm-tags span{ font-size:.72rem; letter-spacing:.08em; color:var(--mid); padding:6px 14px; border:1px solid rgba(234,229,221,.14); border-radius:30px; }
-  /* CTA hidden — entire left panel is now the click target */
   .pm-cta{ display:none; }
 
-  /* dot nav — fixed at viewport center, fades in during projects section */
+  /* dot nav */
   .dot-nav{
     position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
     display:flex; flex-direction:column; gap:14px;
@@ -319,6 +353,14 @@
 </head>
 <body>
 
+<!-- Custom scroll indicator -->
+<div id="scrollBar">
+  <div id="scrollThumb">
+    <div id="scrollThumbLine"></div>
+    <span id="scrollLabel"></span>
+  </div>
+</div>
+
 <!-- Full-page entrance overlay (fades out on load) -->
 <div id="pageIntro"></div>
 
@@ -382,7 +424,6 @@
     <h2 class="section-title">A trail of things <em>built &amp; shipped.</em></h2>
   </div>
   <div class="projects-grid">
-    <!-- left sticky -->
     <div class="proj-left" id="projLeft">
       <div class="proj-panel">
         <div class="dot-nav" id="dotNav"></div>
@@ -405,7 +446,6 @@
         </div>
       </div>
     </div>
-    <!-- right scrolling list -->
     <div class="proj-right" id="projRight"></div>
   </div>
 </section>
@@ -457,7 +497,7 @@ const PROJECTS=[
     result:"10k+ problems generated for student practice",
     tags:["Python","Education","Algorithms","EdTech"],
     detail:{
-      overview:"A problem-generation engine that produces arithmetic exercises across difficulty bands, with answer keys, printable worksheets, and adaptive ramp-ups. The goal was to give teachers and learners an infinite, well-structured supply of practice without the busywork of writing problems by hand.",
+      overview:"A problem-generation engine that produces arithmetic exercises across difficulty bands, with answer keys, printable worksheets, and adaptive ramp-ups.",
       achievements:["Designed a parameterized generator covering operations, ranges, and constraint rules.","Produced over 10,000 unique problems with auto-generated answer keys.","Exported clean printable worksheets used in real classroom settings."],
       learnings:"My first taste of building something other people actually depend on. I learned that 'simple' tools earn trust through correctness and clarity — edge cases in something as basic as arithmetic taught me to respect rigorous testing early."
     }
@@ -469,9 +509,9 @@ const PROJECTS=[
     result:"Working prototype with sub-second alerting",
     tags:["Embedded","Sensors","Hardware","Safety"],
     detail:{
-      overview:"A wrist-worn device combining accelerometer and water-contact sensing to recognize the signature of a swimmer in distress. When submersion and abnormal motion coincide beyond a threshold, the bracelet fires an alert intended to reach a guardian or lifeguard.",
+      overview:"A wrist-worn device combining accelerometer and water-contact sensing to recognize the signature of a swimmer in distress.",
       achievements:["Built a functional hardware prototype on a microcontroller with onboard sensing.","Tuned detection thresholds to balance false positives against missed events.","Achieved sub-second alert latency from event detection to signal."],
-      learnings:"Working on something with life-safety stakes reframed how I think about reliability. A false negative isn't a bug — it's a failure that matters. It pushed me to design for the worst case first, not the happy path."
+      learnings:"Working on something with life-safety stakes reframed how I think about reliability. A false negative isn't a bug — it's a failure that matters."
     }
   },
   {
@@ -481,9 +521,9 @@ const PROJECTS=[
     result:"Reached 200+ residents across multiple homes",
     tags:["Community","Healthcare","Program Design","Music"],
     detail:{
-      overview:"A volunteer-driven initiative built on research showing music's effect on memory and wellbeing in older adults. I coordinated musicians, curated personalized playlists, and structured recurring sessions in care homes — turning a good idea into a reliable, scheduled program.",
+      overview:"A volunteer-driven initiative built on research showing music's effect on memory and wellbeing in older adults.",
       achievements:["Launched recurring music sessions across several senior care facilities.","Reached more than 200 residents with tailored, recurring programming.","Recruited and coordinated a roster of volunteer musicians and helpers."],
-      learnings:"This taught me that impact is mostly logistics. The vision was easy; the value came from showing up every week, handling scheduling, and earning the trust of staff and families. Soft systems matter as much as technical ones."
+      learnings:"This taught me that impact is mostly logistics. The vision was easy; the value came from showing up every week, handling scheduling, and earning the trust of staff and families."
     }
   },
   {
@@ -493,9 +533,9 @@ const PROJECTS=[
     result:"Secured formal partnership & program scope",
     tags:["Policy","Partnerships","Public Sector","Strategy"],
     detail:{
-      overview:"Worked directly with a government department to take a grassroots concept and shape it into something an institution could adopt: scoped deliverables, defined outcomes, and a path to funding. It meant learning to speak the language of public-sector stakeholders, not just engineers.",
+      overview:"Worked directly with a government department to take a grassroots concept and shape it into something an institution could adopt.",
       achievements:["Navigated stakeholder alignment across community and government sides.","Co-defined a program scope with clear outcomes and accountability.","Secured a formal partnership and institutional support for the work."],
-      learnings:"I learned that great ideas die without the patience to move them through real institutions. Influence at this level is about clarity, credibility, and persistence — not the cleverness of the underlying tech."
+      learnings:"I learned that great ideas die without the patience to move them through real institutions."
     }
   },
   {
@@ -505,9 +545,9 @@ const PROJECTS=[
     result:"Contributed to multiple applied research efforts",
     tags:["Research","Engineering","Internship","Applied Science"],
     detail:{
-      overview:"A year focused on going deeper — joining teams as a researcher and intern, contributing to applied projects, and learning how serious organizations turn questions into experiments and experiments into decisions. It connected the academic side of my interests with the practical demands of production work.",
+      overview:"A year focused on going deeper — joining teams as a researcher and intern, contributing to applied projects.",
       achievements:["Contributed to multiple applied research and engineering efforts.","Worked within established teams and delivery processes.","Strengthened the link between disciplined inquiry and shipped outcomes."],
-      learnings:"Research taught me intellectual humility — to follow evidence over intuition, and to be precise about what I do and don't know. It made me a more careful builder and a more honest one."
+      learnings:"Research taught me intellectual humility — to follow evidence over intuition, and to be precise about what I do and don't know."
     }
   },
   {
@@ -517,9 +557,9 @@ const PROJECTS=[
     result:"Shipped production work in industry settings",
     tags:["Industry","Production","Teamwork","Delivery"],
     detail:{
-      overview:"Time in industry roles where the work was measured by what actually shipped. Real constraints, real users, real deadlines — and the discipline of collaborating across teams to deliver dependable software and systems at scale.",
+      overview:"Time in industry roles where the work was measured by what actually shipped.",
       achievements:["Delivered production work that real users and teams relied on.","Operated within deadlines, constraints, and cross-functional teams.","Built the habits of reliable, maintainable, ship-ready engineering."],
-      learnings:"Industry taught me that consistency beats brilliance. The engineers I admired most weren't the flashiest — they were the ones whose work you could trust, week after week. That's the kind of builder I want to be."
+      learnings:"Industry taught me that consistency beats brilliance. The engineers I admired most weren't the flashiest — they were the ones whose work you could trust, week after week."
     }
   }
 ];
@@ -531,7 +571,6 @@ const dot=document.querySelector('.cursor-dot');
 const ring=document.querySelector('.cursor-ring');
 const seeMore=document.getElementById('seeMoreCursor');
 let mx=0,my=0,rx=0,ry=0;
-
 window.addEventListener('mousemove',e=>{
   mx=e.clientX; my=e.clientY;
   dot.style.left=mx+'px'; dot.style.top=my+'px';
@@ -545,7 +584,7 @@ document.querySelectorAll('a,button').forEach(el=>{
 });
 
 /* =========================================================
-   NAV scroll state
+   NAV
 ========================================================= */
 const nav=document.getElementById('nav');
 window.addEventListener('scroll',()=>{ nav.classList.toggle('scrolled',window.scrollY>60); });
@@ -555,14 +594,14 @@ window.addEventListener('scroll',()=>{ nav.classList.toggle('scrolled',window.sc
 ========================================================= */
 gsap.registerPlugin(ScrollTrigger);
 
-/* ---- Page entrance: overlay fades out, hero staggers in ---- */
+/* ---- Page entrance ---- */
 gsap.to('#pageIntro',{opacity:0,duration:0.9,ease:'power2.inOut',delay:0.15,
   onComplete:()=>{ document.getElementById('pageIntro').style.display='none'; }
 });
 gsap.set('[data-hero]',{opacity:0,y:40});
 gsap.to('[data-hero]',{opacity:1,y:0,duration:1.1,ease:'power3.out',stagger:0.13,delay:0.55});
 
-/* ---- Hero orbs subtle parallax on mouse move ---- */
+/* ---- Hero orbs parallax ---- */
 (()=>{
   const hero=document.querySelector('.hero');
   let orbRaf=null;
@@ -603,6 +642,8 @@ const LINE_BASE=46,LINE_BOTTOM_GAP=28;
 heroExit.to('.scroll-hint span',{y:()=>-(window.innerHeight-2*LINE_BOTTOM_GAP-LINE_BASE),ease:'power1.inOut',duration:1,immediateRender:false},0);
 heroExit.to('.scroll-line',{scaleY:()=>Math.max(1,(window.innerHeight-LINE_BOTTOM_GAP*2)/LINE_BASE),transformOrigin:'bottom center',ease:'power1.inOut',duration:1,immediateRender:false},0);
 heroExit.to('.scroll-line',{y:()=>-(window.innerHeight-LINE_BOTTOM_GAP+LINE_BASE),ease:'power1.in',duration:0.5,immediateRender:false},1.0);
+/* fade the whole scroll-hint at phase B so it can't bleed outside the hero */
+heroExit.to('.scroll-hint',{opacity:0,duration:0.35,immediateRender:false},1.0);
 
 /* ---- Interlude ---- */
 const ilLines=gsap.utils.toArray('.interlude-content p');
@@ -640,8 +681,6 @@ function bindReveals(){
 ========================================================= */
 const projRight=document.getElementById('projRight');
 const dotNav=document.getElementById('dotNav');
-// move dotNav to body so position:fixed is viewport-relative
-// (GSAP transforms on proj-left would otherwise create a new containing block)
 document.body.appendChild(dotNav);
 
 PROJECTS.forEach((p,i)=>{
@@ -687,7 +726,6 @@ function setPanel(i){
   dots.forEach((d,di)=>d.classList.toggle('active',di===i));
 }
 
-/* Drive active project by whichever entry is closest to viewport center */
 const entries=[...projRight.children];
 function updateActive(){
   const mid=window.innerHeight/2;
@@ -711,7 +749,6 @@ window.addEventListener('resize',updateActive);
 setPanel(0);
 entries[0].classList.add('active');
 
-/* ---- Project section: show/hide dot nav; animate in on enter ---- */
 gsap.fromTo('.proj-left',{opacity:0,y:40},{
   opacity:1,y:0,duration:1.1,ease:'power3.out',
   scrollTrigger:{trigger:'.projects-grid',start:'top 75%',once:true}
@@ -721,16 +758,14 @@ gsap.fromTo('.proj-entry',{opacity:0,y:40},{
   scrollTrigger:{trigger:'.projects-grid',start:'top 75%',once:true}
 });
 ScrollTrigger.create({
-  trigger:'.projects-grid',
-  start:'top top',
-  end:'bottom bottom',
+  trigger:'.projects-grid',start:'top top',end:'bottom bottom',
   onEnter:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
   onLeave:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4}),
   onEnterBack:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
   onLeaveBack:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4})
 });
 
-/* ---- Left panel: pill cursor + click-to-open-modal ---- */
+/* ---- Left panel pill cursor + click ---- */
 const projLeft=document.getElementById('projLeft');
 projLeft.addEventListener('mouseenter',()=>{
   seeMore.style.opacity='1';
@@ -777,6 +812,148 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 bindReveals();
 bindSectionHead();
 ScrollTrigger.refresh();
+
+/* =========================================================
+   CUSTOM SCROLL INDICATOR
+   Short white line on the right — travels with scroll,
+   widens on hover, and can be dragged to scroll the page.
+========================================================= */
+(()=>{
+  const bar   = document.getElementById('scrollBar');
+  const thumb = document.getElementById('scrollThumb');
+  const lbl   = document.getElementById('scrollLabel');
+  const THUMB_H = 52;
+
+  /* section names shown next to the line */
+  const SECTIONS = [
+    { el: document.querySelector('.hero'),      name: 'Intro'   },
+    { el: document.querySelector('.interlude'), name: 'Story'   },
+    { el: document.querySelector('.projects'),  name: 'Work'    },
+    { el: document.querySelector('.about'),     name: 'About'   },
+    { el: document.querySelector('footer'),     name: 'Contact' }
+  ];
+  function currentSection(){
+    let name = SECTIONS[0].name;
+    SECTIONS.forEach(s=>{
+      if(s.el && s.el.getBoundingClientRect().top < window.innerHeight * 0.55) name = s.name;
+    });
+    return name;
+  }
+
+  /* position the thumb and refresh label text */
+  function updateThumb(){
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if(maxScroll <= 0) return;
+    const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+    const travel   = Math.max(0, bar.getBoundingClientRect().height - THUMB_H);
+    thumb.style.top = (progress * travel) + 'px';
+    lbl.textContent = currentSection();
+  }
+
+  /* auto-show / auto-hide */
+  let hideTimeout = null;
+  let isNearEdge  = false;
+  let isDragging  = false;
+
+  function showBar(){
+    bar.classList.add('visible');
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+  function scheduleHide(){
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(()=>{
+      if(!isDragging && !isNearEdge) bar.classList.remove('visible');
+    }, 1400);
+  }
+
+  /* appear on scroll; disappear after stop; hide instantly at very top */
+  window.addEventListener('scroll', ()=>{
+    updateThumb();
+    if(window.scrollY === 0){
+      clearTimeout(hideTimeout); hideTimeout = null;
+      bar.classList.remove('visible');
+    } else {
+      showBar();
+      scheduleHide();
+    }
+  }, {passive:true});
+
+  /* appear when cursor drifts near the right edge */
+  window.addEventListener('mousemove', e=>{
+    const near = e.clientX >= window.innerWidth - 64;
+    if(near && !isNearEdge){
+      isNearEdge = true;
+      showBar();
+    } else if(!near && isNearEdge){
+      isNearEdge = false;
+      if(!isDragging) scheduleHide();
+    }
+  });
+
+  window.addEventListener('resize', updateThumb);
+  updateThumb();
+
+  /* hover — widen line, show label, expand cursor ring */
+  thumb.addEventListener('mouseenter', ()=>{
+    thumb.classList.add('wide');
+    ring.classList.add('hovered');
+    showBar();
+  });
+  thumb.addEventListener('mouseleave', ()=>{
+    if(!isDragging){ thumb.classList.remove('wide'); ring.classList.remove('hovered'); }
+  });
+
+  /* drag to scroll */
+  let startY = 0, startScroll = 0;
+
+  thumb.addEventListener('mousedown', e=>{
+    isDragging = true;
+    startY = e.clientY;
+    startScroll = window.scrollY;
+    thumb.classList.add('wide');
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!isDragging) return;
+    const travel    = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo(0, Math.max(0, Math.min(maxScroll,
+      startScroll + ((e.clientY - startY) / travel) * maxScroll)));
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!isDragging) return;
+    isDragging = false;
+    thumb.classList.remove('wide');
+    ring.classList.remove('hovered');
+    document.body.style.userSelect = '';
+    document.documentElement.style.scrollBehavior = '';
+    scheduleHide();
+  });
+
+  /* touch drag */
+  thumb.addEventListener('touchstart', e=>{
+    isDragging = true;
+    startY = e.touches[0].clientY;
+    startScroll = window.scrollY;
+    document.documentElement.style.scrollBehavior = 'auto';
+    e.preventDefault();
+  }, {passive:false});
+  window.addEventListener('touchmove', e=>{
+    if(!isDragging) return;
+    const travel    = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo(0, Math.max(0, Math.min(maxScroll,
+      startScroll + ((e.touches[0].clientY - startY) / travel) * maxScroll)));
+  }, {passive:true});
+  window.addEventListener('touchend', ()=>{
+    isDragging = false;
+    document.documentElement.style.scrollBehavior = '';
+    scheduleHide();
+  });
+})();
 </script>
 </body>
 </html>
