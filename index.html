@@ -112,11 +112,13 @@
   nav{
     position:fixed; top:0; left:0; width:100%; z-index:100;
     display:flex; align-items:center; justify-content:space-between;
-    padding:26px 48px;
+    padding:26px 48px; transform:translateY(0);
     transition:background .5s var(--ease), padding .5s var(--ease),
-      backdrop-filter .5s var(--ease), border-color .5s var(--ease);
+      backdrop-filter .5s var(--ease), border-color .5s var(--ease),
+      transform .4s var(--ease);
     border-bottom:1px solid transparent;
   }
+  nav.nav-hidden{ transform:translateY(-100%); }
   nav.scrolled{
     background:rgba(0,0,0,.72);
     backdrop-filter:blur(18px) saturate(120%);
@@ -187,11 +189,11 @@
   @keyframes pulseLine{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
   @media(max-width:640px){ .hero{ padding:0 24px; } .hero-ctas{ flex-direction:column; align-items:flex-start; } }
 
-  /* ---------- Interlude — height reduced so it scrolls faster ---------- */
+  /* ---------- Interlude ---------- */
   .interlude{ position:relative; height:300vh; }
   .interlude-sticky{
     position:sticky; top:0; height:100vh; overflow:hidden;
-    display:flex; align-items:center; justify-content:center; padding:96px 48px 64px;
+    display:flex; align-items:center; justify-content:center; padding:72px 48px 56px;
   }
   .interlude-orb{
     position:absolute; width:560px; height:560px; border-radius:50%;
@@ -206,7 +208,7 @@
   .il-big.gold{ color:var(--gold); }
   .il-body{ font-size:clamp(1rem,2vw,1.22rem); color:var(--mid); line-height:1.55; margin-bottom:16px; max-width:640px; margin-left:auto; margin-right:auto; }
   .il-final{ margin-top:26px; }
-  @media(max-width:640px){ .interlude-sticky{ padding:88px 24px 48px; } }
+  @media(max-width:640px){ .interlude-sticky{ padding:72px 24px 48px; } }
 
   /* ---------- Projects ---------- */
   .projects{ position:relative; padding:140px 48px 120px; }
@@ -219,13 +221,13 @@
   /* left sticky panel */
   .proj-left{
     position:sticky; top:0; height:100vh; display:flex; flex-direction:column;
-    justify-content:center; padding:96px 0 56px; box-sizing:border-box; cursor:none;
+    justify-content:center; padding:56px 0 48px; box-sizing:border-box; cursor:none;
   }
   .proj-panel{ position:relative; }
   .proj-counter{ font-size:.8rem; letter-spacing:.2em; color:var(--mid); margin-bottom:16px; }
   .proj-counter b{ color:var(--fg); font-weight:500; }
   .proj-visual{
-    position:relative; width:100%; height:clamp(170px,26vh,280px);
+    position:relative; width:100%; height:clamp(200px,34vh,360px);
     border-radius:18px; overflow:hidden; background:#080808;
     border:1px solid rgba(234,229,221,.08); margin-bottom:20px;
     display:flex; align-items:center; justify-content:center;
@@ -253,12 +255,11 @@
   .pm-tags span{ font-size:.72rem; letter-spacing:.08em; color:var(--mid); padding:6px 14px; border:1px solid rgba(234,229,221,.14); border-radius:30px; }
   .pm-cta{ display:none; }
 
-  /* dot nav */
+  /* dot nav — rides with the sticky left panel */
   .dot-nav{
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    position:absolute; right:-44px; top:50%; transform:translateY(-50%);
     display:flex; flex-direction:column; gap:14px;
-    z-index:50; opacity:0; pointer-events:none;
-    transition:opacity .4s var(--ease);
+    z-index:50; pointer-events:none;
   }
   .dot-nav .dot{
     width:8px; height:8px; border-radius:8px; background:rgba(234,229,221,.2);
@@ -486,9 +487,6 @@
 </footer>
 
 <script>
-/* =========================================================
-   PROJECT DATA
-========================================================= */
 const PROJECTS=[
   {
     year:"2020",accent:"var(--blue)",accentRaw:"#5b9cf6",
@@ -564,9 +562,6 @@ const PROJECTS=[
   }
 ];
 
-/* =========================================================
-   CUSTOM CURSOR + SEE-MORE PILL
-========================================================= */
 const dot=document.querySelector('.cursor-dot');
 const ring=document.querySelector('.cursor-ring');
 const seeMore=document.getElementById('seeMoreCursor');
@@ -583,25 +578,31 @@ document.querySelectorAll('a,button').forEach(el=>{
   el.addEventListener('mouseleave',()=>ring.classList.remove('hovered'));
 });
 
-/* =========================================================
-   NAV
-========================================================= */
 const nav=document.getElementById('nav');
-window.addEventListener('scroll',()=>{ nav.classList.toggle('scrolled',window.scrollY>60); });
+let lastScrollY=window.scrollY;
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const diff=y-lastScrollY;
+  if(Math.abs(diff)<4){ lastScrollY=y; return; } // ignore micro-jitter
+  if(y<10){
+    nav.classList.remove('nav-hidden'); // always show at very top
+  } else if(diff<0){
+    nav.classList.remove('nav-hidden'); // scrolling up → reveal
+  } else {
+    nav.classList.add('nav-hidden');    // scrolling down → hide
+  }
+  nav.classList.toggle('scrolled',y>60);
+  lastScrollY=y;
+});
 
-/* =========================================================
-   GSAP
-========================================================= */
 gsap.registerPlugin(ScrollTrigger);
 
-/* ---- Page entrance ---- */
 gsap.to('#pageIntro',{opacity:0,duration:0.9,ease:'power2.inOut',delay:0.15,
   onComplete:()=>{ document.getElementById('pageIntro').style.display='none'; }
 });
 gsap.set('[data-hero]',{opacity:0,y:40});
 gsap.to('[data-hero]',{opacity:1,y:0,duration:1.1,ease:'power3.out',stagger:0.13,delay:0.55});
 
-/* ---- Hero orbs parallax ---- */
 (()=>{
   const hero=document.querySelector('.hero');
   let orbRaf=null;
@@ -618,19 +619,14 @@ gsap.to('[data-hero]',{opacity:1,y:0,duration:1.1,ease:'power3.out',stagger:0.13
   });
 })();
 
-/* ---- Hero exit ---- */
 const heroEls=gsap.utils.toArray('[data-hero]');
 const scatter=[
   {x:-260,y:-120,rot:-8},{x:300,y:-60,rot:6},
   {x:-220,y:140,rot:5},{x:260,y:180,rot:-6},{x:0,y:260,rot:0}
 ];
 gsap.set('.scroll-hint',{xPercent:-50});
-
 const heroExit=gsap.timeline({
-  scrollTrigger:{
-    trigger:'.hero',start:'top top',end:'+=150%',
-    scrub:1,pin:true,pinSpacing:false,anticipatePin:1
-  }
+  scrollTrigger:{trigger:'.hero',start:'top top',end:'+=150%',scrub:1,pin:true,pinSpacing:false,anticipatePin:1}
 });
 heroExit.fromTo('.orb-blue',{x:0,y:0,scale:1},{x:480,y:-460,scale:0.15,opacity:0,ease:'power2.in',duration:0.8,immediateRender:false},0);
 heroExit.fromTo('.orb-gold',{x:0,y:0,scale:1},{x:-460,y:480,scale:0.15,opacity:0,ease:'power2.in',duration:0.8,immediateRender:false},0);
@@ -639,13 +635,25 @@ heroEls.forEach((el,i)=>{
   heroExit.fromTo(el,{x:0,y:0,rotation:0,opacity:1},{x:s.x,y:s.y,rotation:s.rot,opacity:0,ease:'power2.in',duration:0.7,immediateRender:false},0);
 });
 const LINE_BASE=46,LINE_BOTTOM_GAP=28;
-heroExit.to('.scroll-hint span',{y:()=>-(window.innerHeight-2*LINE_BOTTOM_GAP-LINE_BASE),ease:'power1.inOut',duration:1,immediateRender:false},0);
-heroExit.to('.scroll-line',{scaleY:()=>Math.max(1,(window.innerHeight-LINE_BOTTOM_GAP*2)/LINE_BASE),transformOrigin:'bottom center',ease:'power1.inOut',duration:1,immediateRender:false},0);
-heroExit.to('.scroll-line',{y:()=>-(window.innerHeight-LINE_BOTTOM_GAP+LINE_BASE),ease:'power1.in',duration:0.5,immediateRender:false},1.0);
-/* fade the whole scroll-hint at phase B so it can't bleed outside the hero */
+heroExit.to('.scroll-hint span',{
+  y:()=>-(window.innerHeight-172), // stops span ~72px from top (just below nav)
+  ease:'power1.inOut',duration:1,immediateRender:false
+},0);
+heroExit.to('.scroll-line',{
+  scaleY:()=>(window.innerHeight-126)/LINE_BASE, // line stops growing when span near nav
+  transformOrigin:'bottom center',ease:'power1.inOut',duration:1,immediateRender:false
+},0);
+// Phase B: line and span both translate up as a fixed-size bar until bottom exits viewport
+heroExit.to('.scroll-line',{
+  y:()=>-(window.innerHeight-LINE_BOTTOM_GAP),
+  ease:'power1.in',duration:0.5,immediateRender:false
+},1.0);
+heroExit.to('.scroll-hint span',{
+  y:()=>-(window.innerHeight-86),
+  ease:'power1.in',duration:0.5,immediateRender:false
+},1.0);
 heroExit.to('.scroll-hint',{opacity:0,duration:0.35,immediateRender:false},1.0);
 
-/* ---- Interlude ---- */
 const ilLines=gsap.utils.toArray('.interlude-content p');
 const ilTl=gsap.timeline({
   scrollTrigger:{trigger:'.interlude',start:'top -50%',end:'bottom bottom',scrub:1}
@@ -655,7 +663,6 @@ ilLines.forEach((line,i)=>{
   ilTl.fromTo(line,{opacity:0,y:45},{opacity:1,y:0,duration:1,ease:'power2.out'},i*1.1);
 });
 
-/* ---- Section heading scrub entrance ---- */
 function bindSectionHead(){
   gsap.set('.section-tag',{opacity:0,x:-24});
   gsap.set('.section-title',{opacity:0,y:52});
@@ -666,22 +673,19 @@ function bindSectionHead(){
   shTl.to('.section-title',{opacity:1,y:0,ease:'power3.out',duration:0.8},0.18);
 }
 
-/* ---- Generic .reveal fade-up ---- */
 function bindReveals(){
   gsap.utils.toArray('.reveal').forEach(el=>{
     gsap.fromTo(el,{opacity:0,y:28},{
-      opacity:1,y:0,duration:1,ease:'power3.out',
-      scrollTrigger:{trigger:el,start:'top 85%',once:true}
+      opacity:1,y:0,ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 88%',end:'top 55%',scrub:1}
     });
   });
 }
 
-/* =========================================================
-   BUILD PROJECTS
-========================================================= */
 const projRight=document.getElementById('projRight');
 const dotNav=document.getElementById('dotNav');
-document.body.appendChild(dotNav);
+// attach dotNav directly to proj-left so it's sticky with the panel
+document.getElementById('projLeft').appendChild(dotNav);
 
 PROJECTS.forEach((p,i)=>{
   const entry=document.createElement('article');
@@ -757,15 +761,7 @@ gsap.fromTo('.proj-entry',{opacity:0,y:40},{
   opacity:1,y:0,duration:1,ease:'power3.out',stagger:0.06,
   scrollTrigger:{trigger:'.projects-grid',start:'top 75%',once:true}
 });
-ScrollTrigger.create({
-  trigger:'.projects-grid',start:'top top',end:'bottom bottom',
-  onEnter:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
-  onLeave:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4}),
-  onEnterBack:()=>gsap.to('.dot-nav',{opacity:1,duration:0.4}),
-  onLeaveBack:()=>gsap.to('.dot-nav',{opacity:0,duration:0.4})
-});
 
-/* ---- Left panel pill cursor + click ---- */
 const projLeft=document.getElementById('projLeft');
 projLeft.addEventListener('mouseenter',()=>{
   seeMore.style.opacity='1';
@@ -777,9 +773,6 @@ projLeft.addEventListener('mouseleave',()=>{
 });
 projLeft.addEventListener('click',()=>openModal(activeIndex));
 
-/* =========================================================
-   MODAL
-========================================================= */
 const modal=document.getElementById('modal');
 const modalYear=document.getElementById('modalYear');
 const modalTitle=document.getElementById('modalTitle');
@@ -808,23 +801,16 @@ document.getElementById('modalClose').addEventListener('click',closeModal);
 modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
-/* ---- init ---- */
 bindReveals();
 bindSectionHead();
 ScrollTrigger.refresh();
 
-/* =========================================================
-   CUSTOM SCROLL INDICATOR
-   Short white line on the right — travels with scroll,
-   widens on hover, and can be dragged to scroll the page.
-========================================================= */
 (()=>{
   const bar   = document.getElementById('scrollBar');
   const thumb = document.getElementById('scrollThumb');
   const lbl   = document.getElementById('scrollLabel');
   const THUMB_H = 52;
 
-  /* section names shown next to the line */
   const SECTIONS = [
     { el: document.querySelector('.hero'),      name: 'Intro'   },
     { el: document.querySelector('.interlude'), name: 'Story'   },
@@ -840,7 +826,6 @@ ScrollTrigger.refresh();
     return name;
   }
 
-  /* position the thumb and refresh label text */
   function updateThumb(){
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     if(maxScroll <= 0) return;
@@ -850,67 +835,37 @@ ScrollTrigger.refresh();
     lbl.textContent = currentSection();
   }
 
-  /* auto-show / auto-hide */
   let hideTimeout = null;
   let isNearEdge  = false;
   let isDragging  = false;
 
-  function showBar(){
-    bar.classList.add('visible');
-    clearTimeout(hideTimeout);
-    hideTimeout = null;
-  }
+  function showBar(){ bar.classList.add('visible'); clearTimeout(hideTimeout); hideTimeout = null; }
   function scheduleHide(){
     clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(()=>{
-      if(!isDragging && !isNearEdge) bar.classList.remove('visible');
-    }, 1400);
+    hideTimeout = setTimeout(()=>{ if(!isDragging && !isNearEdge) bar.classList.remove('visible'); }, 1400);
   }
 
-  /* appear on scroll; disappear after stop; hide instantly at very top */
   window.addEventListener('scroll', ()=>{
     updateThumb();
-    if(window.scrollY === 0){
-      clearTimeout(hideTimeout); hideTimeout = null;
-      bar.classList.remove('visible');
-    } else {
-      showBar();
-      scheduleHide();
-    }
+    if(window.scrollY === 0){ clearTimeout(hideTimeout); hideTimeout = null; bar.classList.remove('visible'); }
+    else { showBar(); scheduleHide(); }
   }, {passive:true});
 
-  /* appear when cursor drifts near the right edge */
   window.addEventListener('mousemove', e=>{
     const near = e.clientX >= window.innerWidth - 64;
-    if(near && !isNearEdge){
-      isNearEdge = true;
-      showBar();
-    } else if(!near && isNearEdge){
-      isNearEdge = false;
-      if(!isDragging) scheduleHide();
-    }
+    if(near && !isNearEdge){ isNearEdge = true; showBar(); }
+    else if(!near && isNearEdge){ isNearEdge = false; if(!isDragging) scheduleHide(); }
   });
 
   window.addEventListener('resize', updateThumb);
   updateThumb();
 
-  /* hover — widen line, show label, expand cursor ring */
-  thumb.addEventListener('mouseenter', ()=>{
-    thumb.classList.add('wide');
-    ring.classList.add('hovered');
-    showBar();
-  });
-  thumb.addEventListener('mouseleave', ()=>{
-    if(!isDragging){ thumb.classList.remove('wide'); ring.classList.remove('hovered'); }
-  });
+  thumb.addEventListener('mouseenter', ()=>{ thumb.classList.add('wide'); ring.classList.add('hovered'); showBar(); });
+  thumb.addEventListener('mouseleave', ()=>{ if(!isDragging){ thumb.classList.remove('wide'); ring.classList.remove('hovered'); } });
 
-  /* drag to scroll */
   let startY = 0, startScroll = 0;
-
   thumb.addEventListener('mousedown', e=>{
-    isDragging = true;
-    startY = e.clientY;
-    startScroll = window.scrollY;
+    isDragging = true; startY = e.clientY; startScroll = window.scrollY;
     thumb.classList.add('wide');
     document.documentElement.style.scrollBehavior = 'auto';
     document.body.style.userSelect = 'none';
@@ -918,41 +873,27 @@ ScrollTrigger.refresh();
   });
   window.addEventListener('mousemove', e=>{
     if(!isDragging) return;
-    const travel    = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
+    const travel = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    window.scrollTo(0, Math.max(0, Math.min(maxScroll,
-      startScroll + ((e.clientY - startY) / travel) * maxScroll)));
+    window.scrollTo(0, Math.max(0, Math.min(maxScroll, startScroll + ((e.clientY - startY) / travel) * maxScroll)));
   });
   window.addEventListener('mouseup', ()=>{
     if(!isDragging) return;
-    isDragging = false;
-    thumb.classList.remove('wide');
-    ring.classList.remove('hovered');
-    document.body.style.userSelect = '';
-    document.documentElement.style.scrollBehavior = '';
+    isDragging = false; thumb.classList.remove('wide'); ring.classList.remove('hovered');
+    document.body.style.userSelect = ''; document.documentElement.style.scrollBehavior = '';
     scheduleHide();
   });
-
-  /* touch drag */
   thumb.addEventListener('touchstart', e=>{
-    isDragging = true;
-    startY = e.touches[0].clientY;
-    startScroll = window.scrollY;
-    document.documentElement.style.scrollBehavior = 'auto';
-    e.preventDefault();
+    isDragging = true; startY = e.touches[0].clientY; startScroll = window.scrollY;
+    document.documentElement.style.scrollBehavior = 'auto'; e.preventDefault();
   }, {passive:false});
   window.addEventListener('touchmove', e=>{
     if(!isDragging) return;
-    const travel    = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
+    const travel = Math.max(1, bar.getBoundingClientRect().height - THUMB_H);
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    window.scrollTo(0, Math.max(0, Math.min(maxScroll,
-      startScroll + ((e.touches[0].clientY - startY) / travel) * maxScroll)));
+    window.scrollTo(0, Math.max(0, Math.min(maxScroll, startScroll + ((e.touches[0].clientY - startY) / travel) * maxScroll)));
   }, {passive:true});
-  window.addEventListener('touchend', ()=>{
-    isDragging = false;
-    document.documentElement.style.scrollBehavior = '';
-    scheduleHide();
-  });
+  window.addEventListener('touchend', ()=>{ isDragging = false; document.documentElement.style.scrollBehavior = ''; scheduleHide(); });
 })();
 </script>
 </body>
