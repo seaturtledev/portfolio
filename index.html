@@ -229,7 +229,7 @@
   .pm-cta:hover .arrow{ transform:translateX(6px); }
 
   /* dot nav */
-  .dot-nav{ position:absolute; left:-44px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:14px; }
+  .dot-nav{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; gap:14px; z-index:50; opacity:0; transition:opacity .4s var(--ease); pointer-events:none; }
   .dot-nav .dot{
     width:8px; height:8px; border-radius:8px; background:rgba(234,229,221,.2);
     transition:all .4s var(--ease);
@@ -237,7 +237,7 @@
   .dot-nav .dot.active{ height:30px; background:var(--blue); }
 
   /* right entries */
-  .proj-right{ display:flex; flex-direction:column; padding-bottom:48vh; }
+  .proj-right{ display:flex; flex-direction:column; padding-top:40vh; padding-bottom:48vh; }
   .proj-entry{
     min-height:30vh; display:flex; flex-direction:column; justify-content:center;
     border-bottom:1px solid rgba(234,229,221,.08); padding:26px 0;
@@ -256,7 +256,7 @@
   @media(max-width:960px){
     .projects-grid{ grid-template-columns:1fr; gap:0; }
     .proj-left{ display:none; }
-    .proj-right{ padding-bottom:16vh; }
+    .proj-right{ padding-top:0; padding-bottom:16vh; }
     .proj-entry{ min-height:auto; padding:44px 0; }
     .proj-entry.active .pe-title{ transform:none; }
     .pe-index{ display:block; }
@@ -382,7 +382,7 @@
 
 <!-- Projects -->
 <section class="projects" id="projects">
-  <div class="section-head reveal">
+  <div class="section-head">
     <div class="section-tag">Selected Work</div>
     <h2 class="section-title">A trail of things <em>built &amp; shipped.</em></h2>
   </div>
@@ -613,10 +613,10 @@ const heroExit=gsap.timeline({
   scrollTrigger:{
     trigger:'.hero',
     start:'top top',
-    end:'+=135%',
+    end:'+=150%',
     scrub:1,
     pin:true,
-    pinSpacing:true,
+    pinSpacing:false,   // no dead spacer — interlude starts the moment pin releases
     anticipatePin:1
   }
 });
@@ -624,36 +624,48 @@ const heroExit=gsap.timeline({
 // orbs leave diagonally while shrinking
 heroExit.fromTo('.orb-blue',
   {x:0,y:0,scale:1},
-  {x:480,y:-460,scale:0.15,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+  {x:480,y:-460,scale:0.15,opacity:0,ease:'power2.in',duration:0.8,immediateRender:false},0);
 heroExit.fromTo('.orb-gold',
   {x:0,y:0,scale:1},
-  {x:-460,y:480,scale:0.15,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+  {x:-460,y:480,scale:0.15,opacity:0,ease:'power2.in',duration:0.8,immediateRender:false},0);
 
-// text scatters away (fromTo + immediateRender:false so it returns when scrolling back up)
+// text scatters away FASTER (0.7) — fully gone well before line reaches full height
 heroEls.forEach((el,i)=>{
   const s=scatter[i%scatter.length];
   heroExit.fromTo(el,
     {x:0,y:0,rotation:0,opacity:1},
-    {x:s.x,y:s.y,rotation:s.rot,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+    {x:s.x,y:s.y,rotation:s.rot,opacity:0,ease:'power2.in',duration:0.7,immediateRender:false},0);
 });
 
-// the "Scroll" label fades, then the blue line grows UPWARD (bottom anchored)
-// until it's vertically centered, then the whole line shifts up and off-screen.
-const LINE_BASE=46, LINE_BOTTOM_GAP=28; // px; keeps equal padding top & bottom when centered
-heroExit.to('.scroll-hint span',{opacity:0,ease:'power1.in',duration:0.3,immediateRender:false},0);
+const LINE_BASE=46, LINE_BOTTOM_GAP=28;
+
+// "Scroll" label rides up WITH the growing line (phase A), same ease/duration
+heroExit.to('.scroll-hint span',{
+  y:()=> -(window.innerHeight - 2*LINE_BOTTOM_GAP - LINE_BASE),
+  ease:'power1.inOut', duration:1, immediateRender:false
+},0);
+
+// Phase A — line grows upward (bottom anchored) until vertically centred
 heroExit.to('.scroll-line',{
   scaleY:()=> Math.max(1,(window.innerHeight - LINE_BOTTOM_GAP*2)/LINE_BASE),
   transformOrigin:'bottom center', ease:'power1.inOut', duration:1, immediateRender:false
 },0);
+
+// Phase B — line now translates up AS A FIXED-SIZE BAR (both top and bottom
+// rise at the same rate) until the bottom edge fully clears the viewport top.
+// The pin ends exactly when this completes, so the moment the line is gone
+// the interlude words and circle fade in — zero overlap, zero dead space.
 heroExit.to('.scroll-line',{
-  y:()=> -(window.innerHeight), ease:'power1.in', duration:0.6, immediateRender:false
+  y:()=> -(window.innerHeight - LINE_BOTTOM_GAP + LINE_BASE),
+  ease:'power1.in', duration:0.5, immediateRender:false
 },1.0);
 
-/* ---- Interlude: orb + words start the moment the section is entered.
-        Lines stay visible once revealed — no exit. ---- */
+/* ---- Interlude: orb + words begin EXACTLY when the hero pin ends.
+        The trigger offset '-50%' aligns the ScrollTrigger fire with
+        the pin's release point (scroll 150 vh from page top). ---- */
 const ilLines=gsap.utils.toArray('.interlude-content p');
 const ilTl=gsap.timeline({
-  scrollTrigger:{ trigger:'.interlude', start:'top top', end:'bottom bottom', scrub:1 }
+  scrollTrigger:{ trigger:'.interlude', start:'top -50%', end:'bottom bottom', scrub:1 }
 });
 ilTl.to('#ilOrb',{opacity:1,duration:1.5},0);
 ilLines.forEach((line,i)=>{
@@ -668,6 +680,22 @@ function bindReveals(){
       scrollTrigger:{ trigger:el, start:'top 85%', once:true }
     });
   });
+}
+
+/* ---- Section heading: fully scroll-driven / reversible scrub entrance ---- */
+function bindSectionHead(){
+  gsap.set('.section-tag',{opacity:0,x:-24});
+  gsap.set('.section-title',{opacity:0,y:52});
+  const shTl=gsap.timeline({
+    scrollTrigger:{
+      trigger:'.section-head',
+      start:'top 82%',
+      end:'top 44%',
+      scrub:1
+    }
+  });
+  shTl.to('.section-tag',{opacity:1,x:0,ease:'power3.out',duration:0.6});
+  shTl.to('.section-title',{opacity:1,y:0,ease:'power3.out',duration:0.8},0.18);
 }
 
 /* =========================================================
@@ -775,6 +803,15 @@ gsap.fromTo('.proj-entry',{opacity:0,y:40},{
   opacity:1,y:0,duration:1,ease:'power3.out',stagger:0.06,
   scrollTrigger:{ trigger:'.projects-grid', start:'top 75%', once:true }
 });
+ScrollTrigger.create({
+  trigger:'.projects',
+  start:'top 60%',
+  end:'bottom 40%',
+  onEnter:()=> gsap.to('.dot-nav',{opacity:1,duration:0.5}),
+  onLeave:()=> gsap.to('.dot-nav',{opacity:0,duration:0.5}),
+  onEnterBack:()=> gsap.to('.dot-nav',{opacity:1,duration:0.5}),
+  onLeaveBack:()=> gsap.to('.dot-nav',{opacity:0,duration:0.5})
+});
 
 /* =========================================================
    MODAL
@@ -812,6 +849,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
 /* init reveals after layout */
 bindReveals();
+bindSectionHead();
 ScrollTrigger.refresh();
 </script>
 </body>
