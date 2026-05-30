@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Will W. — Portfolio</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0d0c0a;
+    --fg:#EAE5DD;
+    --mid:#6a6560;
+    --blue:#5b9cf6;
+    --gold:#c9a24e;
+    --cyan:#54c8d6;
+    --purple:#a98bf0;
+    --green:#74c98a;
+    --red:#e0796b;
+    --serif:"DM Serif Display", Georgia, serif;
+    --sans:"Outfit", system-ui, sans-serif;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+    cursor:none;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Scrollbar ---------- */
+  ::-webkit-scrollbar{ width:2px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--blue); }
+  html{ scrollbar-width:thin; scrollbar-color:var(--blue) transparent; }
+
+  a,button{ cursor:none; }
+  ::selection{ background:rgba(91,156,246,.3); color:var(--fg); }
+
+  /* ---------- Custom cursor ---------- */
+  .cursor-dot,.cursor-ring{
+    position:fixed; top:0; left:0; border-radius:50%;
+    pointer-events:none; z-index:9999; mix-blend-mode:screen;
+    transform:translate(-50%,-50%);
+  }
+  .cursor-dot{ width:6px; height:6px; background:var(--fg); }
+  .cursor-ring{
+    width:34px; height:34px; border:1px solid rgba(234,229,221,.5);
+    transition:width .25s var(--ease), height .25s var(--ease), border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .cursor-ring.hovered{
+    width:54px; height:54px; border-color:var(--blue);
+    background:rgba(91,156,246,.08);
+  }
+  @media (hover:none){ .cursor-dot,.cursor-ring{ display:none; } body,a,button{ cursor:auto; } }
+
+  /* ---------- Nav ---------- */
+  nav{
+    position:fixed; top:0; left:0; width:100%; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px 48px;
+    transition:background .5s var(--ease), padding .5s var(--ease), backdrop-filter .5s var(--ease), border-color .5s var(--ease);
+    border-bottom:1px solid transparent;
+  }
+  nav.scrolled{
+    background:rgba(13,12,10,.55);
+    backdrop-filter:blur(18px) saturate(120%);
+    -webkit-backdrop-filter:blur(18px) saturate(120%);
+    padding:18px 48px;
+    border-bottom:1px solid rgba(234,229,221,.07);
+  }
+  .nav-logo{ font-family:var(--serif); font-size:1.5rem; letter-spacing:.5px; color:var(--fg); text-decoration:none; }
+  .nav-links{ display:flex; gap:38px; }
+  .nav-links a{
+    color:var(--mid); text-decoration:none; font-size:.82rem; letter-spacing:.14em;
+    text-transform:uppercase; position:relative; transition:color .35s var(--ease);
+  }
+  .nav-links a::after{
+    content:""; position:absolute; left:0; bottom:-5px; height:1px; width:0;
+    background:var(--blue); transition:width .35s var(--ease);
+  }
+  .nav-links a:hover{ color:var(--fg); }
+  .nav-links a:hover::after{ width:100%; }
+  @media(max-width:640px){ nav{ padding:20px 24px; } nav.scrolled{ padding:14px 24px; } .nav-links{ gap:20px; } .nav-links a{ font-size:.7rem; } }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative; height:100vh; min-height:560px;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:92px 48px 120px; overflow:hidden;
+  }
+  .orb{ position:absolute; border-radius:50%; filter:blur(90px); opacity:.55; pointer-events:none; }
+  .orb-blue{ width:520px; height:520px; background:var(--blue); top:-160px; right:-120px; opacity:.32; }
+  .orb-gold{ width:480px; height:480px; background:var(--gold); bottom:-180px; left:-140px; opacity:.26; }
+
+  .hero-inner{ position:relative; z-index:2; max-width:1100px; }
+  .eyebrow{
+    font-size:.78rem; letter-spacing:.32em; text-transform:uppercase; color:var(--blue);
+    margin-bottom:22px; display:flex; align-items:center; gap:14px;
+  }
+  .eyebrow::before{ content:""; width:42px; height:1px; background:var(--blue); display:inline-block; }
+  .hero-name{
+    font-family:var(--serif); font-size:clamp(3rem,8.5vw,7.4rem); line-height:.96;
+    letter-spacing:-.01em; margin-bottom:8px;
+  }
+  .hero-name em{ font-style:italic; color:var(--gold); }
+  .hero-sub{
+    font-family:var(--serif); font-style:italic; font-size:clamp(1.2rem,2.6vw,1.85rem);
+    color:var(--fg); margin-bottom:22px; opacity:.92;
+  }
+  .hero-bio{ max-width:500px; color:var(--mid); font-size:1rem; line-height:1.65; margin-bottom:34px; }
+  .hero-ctas{ display:flex; gap:18px; flex-wrap:wrap; }
+  .btn{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:14px 30px; border-radius:40px; font-size:.86rem; letter-spacing:.06em;
+    text-decoration:none; transition:transform .35s var(--ease), background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease);
+  }
+  .btn-primary{ background:var(--blue); color:#0d0c0a; font-weight:500; }
+  .btn-primary:hover{ transform:translateY(-3px); background:#7cb0f8; }
+  .btn-ghost{ border:1px solid rgba(234,229,221,.22); color:var(--fg); }
+  .btn-ghost:hover{ transform:translateY(-3px); border-color:var(--gold); color:var(--gold); }
+
+  .scroll-hint{
+    position:absolute; bottom:28px; left:50%;
+    display:flex; flex-direction:column; align-items:center; gap:10px; z-index:2;
+  }
+  .scroll-hint span{ font-size:.66rem; letter-spacing:.3em; text-transform:uppercase; color:var(--mid); }
+  .scroll-line{ width:2px; height:46px; background:var(--blue); transform-origin:bottom center; box-shadow:0 0 14px rgba(91,156,246,.6); animation:pulseLine 2s var(--ease) infinite; }
+  @keyframes pulseLine{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
+  @media(max-width:640px){ .hero{ padding:0 24px; } .hero-ctas{ flex-direction:column; align-items:flex-start; } }
+
+  /* ---------- Interlude ---------- */
+  .interlude{ position:relative; height:520vh; }
+  .interlude-sticky{
+    position:sticky; top:0; height:100vh; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; padding:96px 48px 64px;
+  }
+  .interlude-orb{
+    position:absolute; width:560px; height:560px; border-radius:50%;
+    background:radial-gradient(circle, rgba(91,156,246,.5), rgba(201,162,78,.12) 55%, transparent 70%);
+    filter:blur(40px); opacity:0; z-index:0;
+  }
+  .interlude-content{ position:relative; z-index:2; max-width:860px; text-align:center; }
+  .interlude-content p{ opacity:0; will-change:transform,opacity; }
+  .il-label{
+    font-size:.8rem; letter-spacing:.32em; text-transform:uppercase; color:var(--gold);
+    margin-bottom:24px;
+  }
+  .il-big{ font-family:var(--serif); font-size:clamp(1.7rem,5vw,3.6rem); line-height:1.1; margin-bottom:16px; letter-spacing:-.01em; }
+  .il-big.italic{ font-style:italic; }
+  .il-big.gold{ color:var(--gold); }
+  .il-body{ font-size:clamp(1rem,2vw,1.22rem); color:var(--mid); line-height:1.55; margin-bottom:16px; max-width:640px; margin-left:auto; margin-right:auto; }
+  .il-final{ margin-top:26px; }
+  @media(max-width:640px){ .interlude-sticky{ padding:88px 24px 48px; } }
+
+  /* ---------- Projects ---------- */
+  .projects{ position:relative; padding:140px 48px 120px; }
+  .section-head{ max-width:1400px; margin:0 auto 70px; }
+  .section-tag{ font-size:.8rem; letter-spacing:.32em; text-transform:uppercase; color:var(--blue); margin-bottom:18px; }
+  .section-title{ font-family:var(--serif); font-size:clamp(2.2rem,5vw,3.6rem); line-height:1.05; }
+  .section-title em{ font-style:italic; color:var(--gold); }
+
+  .projects-grid{ max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:80px; }
+
+  /* left sticky panel */
+  .proj-left{ position:sticky; top:0; height:100vh; display:flex; flex-direction:column; justify-content:center; padding:96px 0 56px; box-sizing:border-box; }
+  .proj-panel{ position:relative; }
+  .proj-counter{ font-size:.8rem; letter-spacing:.2em; color:var(--mid); margin-bottom:16px; }
+  .proj-counter b{ color:var(--fg); font-weight:500; }
+
+  .proj-visual{
+    position:relative; width:100%; height:clamp(170px,26vh,280px); border-radius:18px; overflow:hidden;
+    background:#141310; border:1px solid rgba(234,229,221,.08); margin-bottom:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pv-glow{ position:absolute; width:70%; height:70%; border-radius:50%; filter:blur(70px); opacity:.5; transition:background .6s var(--ease); }
+  .pv-watermark{
+    position:absolute; font-family:var(--serif); font-size:14rem; line-height:1; color:rgba(234,229,221,.04);
+    bottom:-3rem; right:1rem; user-select:none; transition:color .6s var(--ease);
+  }
+  .pv-lines{ position:absolute; inset:0; opacity:.5; }
+  .pv-lines::before,.pv-lines::after{
+    content:""; position:absolute; background:rgba(234,229,221,.08);
+  }
+  .pv-lines::before{ left:14%; top:0; bottom:0; width:1px; }
+  .pv-lines::after{ top:30%; left:0; right:0; height:1px; }
+  .pv-emoji{
+    position:relative; z-index:2; font-size:clamp(3.2rem,7vh,5rem); line-height:1;
+    filter:drop-shadow(0 10px 30px rgba(0,0,0,.5));
+    clip-path:inset(0 0 0 0);
+  }
+  .pv-emoji,.pv-meta-img{ transition:clip-path .6s var(--ease); }
+
+  .proj-meta{ position:relative; }
+  .pm-year{ font-size:.82rem; letter-spacing:.18em; color:var(--blue); margin-bottom:8px; transition:color .5s var(--ease); }
+  .pm-title{ font-family:var(--serif); font-size:1.7rem; line-height:1.1; margin-bottom:12px; }
+  .pm-summary{ color:var(--mid); font-size:.96rem; line-height:1.55; margin-bottom:16px; max-width:94%; }
+  .pm-result{
+    border-left:2px solid var(--gold); padding:4px 0 4px 16px; margin-bottom:16px;
+  }
+  .pm-result .label{ font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:3px; }
+  .pm-result .val{ font-family:var(--serif); font-size:1.1rem; color:var(--fg); }
+  .pm-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+  .pm-tags span{
+    font-size:.72rem; letter-spacing:.08em; color:var(--mid);
+    padding:6px 14px; border:1px solid rgba(234,229,221,.14); border-radius:30px;
+  }
+  .pm-cta{
+    display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+    color:var(--fg); font-size:.9rem; letter-spacing:.04em; position:relative;
+  }
+  .pm-cta .arrow{ transition:transform .35s var(--ease); }
+  .pm-cta:hover{ color:var(--blue); }
+  .pm-cta:hover .arrow{ transform:translateX(6px); }
+
+  /* dot nav */
+  .dot-nav{ position:absolute; left:-44px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:14px; }
+  .dot-nav .dot{
+    width:8px; height:8px; border-radius:8px; background:rgba(234,229,221,.2);
+    transition:all .4s var(--ease);
+  }
+  .dot-nav .dot.active{ height:30px; background:var(--blue); }
+
+  /* right entries */
+  .proj-right{ display:flex; flex-direction:column; padding-bottom:48vh; }
+  .proj-entry{
+    min-height:30vh; display:flex; flex-direction:column; justify-content:center;
+    border-bottom:1px solid rgba(234,229,221,.08); padding:26px 0;
+  }
+  .proj-entry:last-child{ border-bottom:none; }
+  .pe-index{ display:none; font-size:.8rem; letter-spacing:.2em; color:var(--mid); margin-bottom:14px; }
+  .pe-title{
+    font-family:var(--serif); font-size:clamp(1.8rem,4vw,3rem); line-height:1.08; color:var(--mid);
+    transition:transform .5s var(--ease), color .5s var(--ease); margin-bottom:0;
+  }
+  .proj-entry.active .pe-title{ transform:translateX(14px); color:var(--fg); }
+  .pe-emoji{ font-size:1.5rem; margin-right:12px; }
+  .pe-summary{ display:none; color:var(--mid); font-size:1rem; line-height:1.7; max-width:90%; margin:18px 0 16px; }
+  .pe-stat{ display:none; font-family:var(--serif); font-style:italic; font-size:1.2rem; color:var(--gold); }
+
+  @media(max-width:960px){
+    .projects-grid{ grid-template-columns:1fr; gap:0; }
+    .proj-left{ display:none; }
+    .proj-right{ padding-bottom:16vh; }
+    .proj-entry{ min-height:auto; padding:44px 0; }
+    .proj-entry.active .pe-title{ transform:none; }
+    .pe-index{ display:block; }
+    .pe-summary,.pe-stat{ display:block; }
+    .pe-mobile-cta{ display:inline-flex; }
+  }
+
+  .pe-mobile-cta{
+    display:none; align-items:center; gap:8px; text-decoration:none; color:var(--blue);
+    font-size:.88rem; margin-top:20px;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+    background:rgba(8,7,6,.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    opacity:0; visibility:hidden; transition:opacity .4s var(--ease), visibility .4s var(--ease);
+    padding:40px 24px;
+  }
+  .modal-overlay.open{ opacity:1; visibility:visible; }
+  .modal-card{
+    position:relative; max-width:720px; width:100%; max-height:86vh; overflow-y:auto;
+    background:#131210; border:1px solid rgba(234,229,221,.1); border-radius:20px;
+    padding:56px; transform:translateY(30px) scale(.97); transition:transform .45s var(--ease);
+  }
+  .modal-overlay.open .modal-card{ transform:translateY(0) scale(1); }
+  .modal-close{
+    position:absolute; top:24px; right:24px; width:42px; height:42px; border-radius:50%;
+    border:1px solid rgba(234,229,221,.16); background:transparent; color:var(--fg);
+    font-size:1.1rem; display:flex; align-items:center; justify-content:center;
+    transition:all .3s var(--ease);
+  }
+  .modal-close:hover{ background:var(--blue); color:#0d0c0a; border-color:var(--blue); }
+  .modal-year{ font-size:.9rem; letter-spacing:.2em; margin-bottom:12px; }
+  .modal-title{ font-family:var(--serif); font-size:2.6rem; line-height:1.05; margin-bottom:24px; }
+  .modal-rule{ height:1px; background:rgba(234,229,221,.12); margin-bottom:30px; }
+  .modal-section{ margin-bottom:30px; }
+  .modal-section h4{
+    font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--gold);
+    font-weight:500; margin-bottom:14px;
+  }
+  .modal-section p{ color:var(--mid); line-height:1.75; font-size:1rem; }
+  .modal-section ul{ list-style:none; }
+  .modal-section li{ color:var(--mid); line-height:1.7; padding-left:22px; position:relative; margin-bottom:8px; }
+  .modal-section li::before{ content:"—"; position:absolute; left:0; color:var(--blue); }
+  @media(max-width:640px){ .modal-card{ padding:38px 26px; } .modal-title{ font-size:2rem; } }
+
+  /* ---------- About ---------- */
+  .about{ padding:140px 48px; max-width:1400px; margin:0 auto; }
+  .about-grid{ display:grid; grid-template-columns:1fr 1.1fr; gap:90px; align-items:start; }
+  .about-heading{ font-family:var(--serif); font-size:clamp(2.2rem,5vw,3.8rem); line-height:1.1; }
+  .about-heading em{ font-style:italic; color:var(--gold); }
+  .about-text p{ color:var(--mid); font-size:1.08rem; line-height:1.85; margin-bottom:24px; }
+  .about-text p:first-child{ color:var(--fg); }
+  @media(max-width:960px){ .about{ padding:90px 24px; } .about-grid{ grid-template-columns:1fr; gap:40px; } }
+
+  /* ---------- Footer ---------- */
+  footer{
+    border-top:1px solid rgba(234,229,221,.1); padding:36px 48px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px;
+    margin-top:40px;
+  }
+  footer .copy{ color:var(--mid); font-size:.85rem; letter-spacing:.04em; }
+  .footer-links{ display:flex; gap:30px; }
+  .footer-links a{ color:var(--mid); text-decoration:none; font-size:.82rem; letter-spacing:.1em; text-transform:uppercase; transition:color .3s var(--ease); }
+  .footer-links a:hover{ color:var(--blue); }
+  @media(max-width:640px){ footer{ padding:28px 24px; } }
+
+  .reveal{ opacity:0; }
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor-ring"></div>
+<div class="cursor-dot"></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#top" class="nav-logo">Will W.</a>
+  <div class="nav-links">
+    <a href="#projects">Projects</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="top">
+  <div class="orb orb-blue"></div>
+  <div class="orb orb-gold"></div>
+  <div class="hero-inner">
+    <div class="eyebrow" data-hero>Builder · Researcher · Community-driven</div>
+    <h1 class="hero-name" data-hero>Will <em>W.</em></h1>
+    <p class="hero-sub" data-hero>Engineering things that matter to people.</p>
+    <p class="hero-bio" data-hero>I design and build technology at the intersection of hard problems and human impact — from arithmetic engines to drowning-detection wearables, from care homes to city hall.</p>
+    <div class="hero-ctas" data-hero>
+      <a href="#projects" class="btn btn-primary">View the work →</a>
+      <a href="#contact" class="btn btn-ghost">Get in touch</a>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</header>
+
+<!-- Interlude -->
+<section class="interlude">
+  <div class="interlude-sticky">
+    <div class="interlude-orb" id="ilOrb"></div>
+    <div class="interlude-content">
+      <p class="il-label">A bit about me</p>
+      <p class="il-big">I don't just build things —</p>
+      <p class="il-big italic gold">I build things that matter.</p>
+      <p class="il-body">From classrooms to care homes. From circuit boards to city hall.</p>
+      <p class="il-body">Driven by a simple belief: the best technology disappears into the lives it improves — quietly, usefully, for real people.</p>
+      <p class="il-big il-final">Six projects.</p>
+      <p class="il-big italic">Five years. One thread.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section class="projects" id="projects">
+  <div class="section-head reveal">
+    <div class="section-tag">Selected Work</div>
+    <h2 class="section-title">A trail of things <em>built &amp; shipped.</em></h2>
+  </div>
+
+  <div class="projects-grid">
+    <!-- left sticky -->
+    <div class="proj-left">
+      <div class="proj-panel">
+        <div class="dot-nav" id="dotNav"></div>
+        <div class="proj-counter"><b id="counterNum">01</b> / 06</div>
+        <div class="proj-visual">
+          <div class="pv-glow" id="pvGlow"></div>
+          <div class="pv-lines"></div>
+          <div class="pv-watermark" id="pvWatermark">2020</div>
+          <div class="pv-emoji" id="pvEmoji">🧮</div>
+        </div>
+        <div class="proj-meta">
+          <div class="pm-year" id="pmYear">2020</div>
+          <h3 class="pm-title" id="pmTitle">Arithmetic Generators</h3>
+          <p class="pm-summary" id="pmSummary"></p>
+          <div class="pm-result">
+            <span class="label">Key result</span>
+            <span class="val" id="pmResult"></span>
+          </div>
+          <div class="pm-tags" id="pmTags"></div>
+          <a href="#" class="pm-cta" id="pmCta">View Full Story <span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- right scrolling list -->
+    <div class="proj-right" id="projRight"></div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-card">
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <div class="modal-year" id="modalYear"></div>
+    <h3 class="modal-title" id="modalTitle"></h3>
+    <div class="modal-rule"></div>
+    <div class="modal-section">
+      <h4>Overview</h4>
+      <p id="modalOverview"></p>
+    </div>
+    <div class="modal-section">
+      <h4>Key Achievements</h4>
+      <ul id="modalAchievements"></ul>
+    </div>
+    <div class="modal-section">
+      <h4>What I Learned</h4>
+      <p id="modalLearnings"></p>
+    </div>
+  </div>
+</div>
+
+<!-- About -->
+<section class="about" id="about">
+  <div class="about-grid">
+    <h2 class="about-heading reveal">Curious by default, <em>useful by design.</em></h2>
+    <div class="about-text">
+      <p class="reveal">I'm an engineer and builder who keeps gravitating toward problems where the technical challenge and the human stakes are equally high. The most interesting work, to me, sits exactly where those two overlap.</p>
+      <p class="reveal">Over the past five years that's meant writing software that helps kids learn arithmetic, prototyping a wearable that could detect drowning, bringing music into senior care homes, and partnering with government to turn ideas into policy and programs that actually reach people.</p>
+      <p class="reveal">Whatever the medium — code, hardware, research, or partnership — the thread is the same: I like shipping things that leave the world a little more capable than I found it, and I like working with people who feel the same way.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer id="contact">
+  <div class="copy">© 2026 Will W. — Built with intent.</div>
+  <div class="footer-links">
+    <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="#" target="_blank" rel="noopener">GitHub</a>
+    <a href="mailto:hello@willw.dev">Email</a>
+  </div>
+</footer>
+
+<script>
+/* =========================================================
+   PROJECT DATA
+========================================================= */
+const PROJECTS = [
+  {
+    year:"2020", emoji:"🧮", accent:"var(--blue)", accentRaw:"#5b9cf6",
+    title:"Arithmetic Generators",
+    summary:"Built a configurable engine that generates endless, difficulty-tuned arithmetic problems and worksheets for classroom and self-paced learning.",
+    result:"10k+ problems generated for student practice",
+    tags:["Python","Education","Algorithms","EdTech"],
+    detail:{
+      overview:"A problem-generation engine that produces arithmetic exercises across difficulty bands, with answer keys, printable worksheets, and adaptive ramp-ups. The goal was to give teachers and learners an infinite, well-structured supply of practice without the busywork of writing problems by hand.",
+      achievements:[
+        "Designed a parameterized generator covering operations, ranges, and constraint rules.",
+        "Produced over 10,000 unique problems with auto-generated answer keys.",
+        "Exported clean printable worksheets used in real classroom settings."
+      ],
+      learnings:"My first taste of building something other people actually depend on. I learned that 'simple' tools earn trust through correctness and clarity — edge cases in something as basic as arithmetic taught me to respect rigorous testing early."
+    }
+  },
+  {
+    year:"2021", emoji:"🌊", accent:"var(--cyan)", accentRaw:"#54c8d6",
+    title:"Drowning Detection Bracelet",
+    summary:"Prototyped a wearable that monitors motion and submersion patterns to detect potential drowning events and trigger an alert in real time.",
+    result:"Working prototype with sub-second alerting",
+    tags:["Embedded","Sensors","Hardware","Safety"],
+    detail:{
+      overview:"A wrist-worn device combining accelerometer and water-contact sensing to recognize the signature of a swimmer in distress. When submersion and abnormal motion coincide beyond a threshold, the bracelet fires an alert intended to reach a guardian or lifeguard.",
+      achievements:[
+        "Built a functional hardware prototype on a microcontroller with onboard sensing.",
+        "Tuned detection thresholds to balance false positives against missed events.",
+        "Achieved sub-second alert latency from event detection to signal."
+      ],
+      learnings:"Working on something with life-safety stakes reframed how I think about reliability. A false negative isn't a bug — it's a failure that matters. It pushed me to design for the worst case first, not the happy path."
+    }
+  },
+  {
+    year:"2022", emoji:"🎵", accent:"var(--gold)", accentRaw:"#c9a24e",
+    title:"Music for Seniors Initiative",
+    summary:"Founded and ran a program bringing live and curated music into senior care homes to support memory, mood, and connection.",
+    result:"Reached 200+ residents across multiple homes",
+    tags:["Community","Healthcare","Program Design","Music"],
+    detail:{
+      overview:"A volunteer-driven initiative built on research showing music's effect on memory and wellbeing in older adults. I coordinated musicians, curated personalized playlists, and structured recurring sessions in care homes — turning a good idea into a reliable, scheduled program.",
+      achievements:[
+        "Launched recurring music sessions across several senior care facilities.",
+        "Reached more than 200 residents with tailored, recurring programming.",
+        "Recruited and coordinated a roster of volunteer musicians and helpers."
+      ],
+      learnings:"This taught me that impact is mostly logistics. The vision was easy; the value came from showing up every week, handling scheduling, and earning the trust of staff and families. Soft systems matter as much as technical ones."
+    }
+  },
+  {
+    year:"2023", emoji:"🏛️", accent:"var(--purple)", accentRaw:"#a98bf0",
+    title:"Government Partnership Project",
+    summary:"Partnered with a government body to translate a community technology idea into a funded, scoped program with real institutional backing.",
+    result:"Secured formal partnership & program scope",
+    tags:["Policy","Partnerships","Public Sector","Strategy"],
+    detail:{
+      overview:"Worked directly with a government department to take a grassroots concept and shape it into something an institution could adopt: scoped deliverables, defined outcomes, and a path to funding. It meant learning to speak the language of public-sector stakeholders, not just engineers.",
+      achievements:[
+        "Navigated stakeholder alignment across community and government sides.",
+        "Co-defined a program scope with clear outcomes and accountability.",
+        "Secured a formal partnership and institutional support for the work."
+      ],
+      learnings:"I learned that great ideas die without the patience to move them through real institutions. Influence at this level is about clarity, credibility, and persistence — not the cleverness of the underlying tech."
+    }
+  },
+  {
+    year:"2024", emoji:"🔬", accent:"var(--green)", accentRaw:"#74c98a",
+    title:"Internships & Research",
+    summary:"Took on research and internship roles, contributing to applied projects and sharpening the bridge between rigorous inquiry and shipped product.",
+    result:"Contributed to multiple applied research efforts",
+    tags:["Research","Engineering","Internship","Applied Science"],
+    detail:{
+      overview:"A year focused on going deeper — joining teams as a researcher and intern, contributing to applied projects, and learning how serious organizations turn questions into experiments and experiments into decisions. It connected the academic side of my interests with the practical demands of production work.",
+      achievements:[
+        "Contributed to multiple applied research and engineering efforts.",
+        "Worked within established teams and delivery processes.",
+        "Strengthened the link between disciplined inquiry and shipped outcomes."
+      ],
+      learnings:"Research taught me intellectual humility — to follow evidence over intuition, and to be precise about what I do and don't know. It made me a more careful builder and a more honest one."
+    }
+  },
+  {
+    year:"2025", emoji:"💼", accent:"var(--red)", accentRaw:"#e0796b",
+    title:"Previous Jobs & Industry",
+    summary:"Worked across industry roles, shipping in real production environments and learning what it takes to deliver under constraints, deadlines, and scale.",
+    result:"Shipped production work in industry settings",
+    tags:["Industry","Production","Teamwork","Delivery"],
+    detail:{
+      overview:"Time in industry roles where the work was measured by what actually shipped. Real constraints, real users, real deadlines — and the discipline of collaborating across teams to deliver dependable software and systems at scale.",
+      achievements:[
+        "Delivered production work that real users and teams relied on.",
+        "Operated within deadlines, constraints, and cross-functional teams.",
+        "Built the habits of reliable, maintainable, ship-ready engineering."
+      ],
+      learnings:"Industry taught me that consistency beats brilliance. The engineers I admired most weren't the flashiest — they were the ones whose work you could trust, week after week. That's the kind of builder I want to be."
+    }
+  }
+];
+
+/* =========================================================
+   CUSTOM CURSOR
+========================================================= */
+const dot = document.querySelector('.cursor-dot');
+const ring = document.querySelector('.cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+window.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+function lag(){ rx+=(mx-rx)*0.18; ry+=(my-ry)*0.18; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(lag); }
+lag();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>ring.classList.add('hovered'));
+  el.addEventListener('mouseleave',()=>ring.classList.remove('hovered'));
+});
+
+/* =========================================================
+   NAV scroll state
+========================================================= */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>{ nav.classList.toggle('scrolled', window.scrollY>60); });
+
+/* =========================================================
+   GSAP
+========================================================= */
+gsap.registerPlugin(ScrollTrigger);
+
+/* ---- Hero staggered entrance ---- */
+gsap.set('[data-hero]',{opacity:0,y:40});
+gsap.to('[data-hero]',{opacity:1,y:0,duration:1.1,ease:'power3.out',stagger:0.13,delay:0.2});
+
+/* ---- Hero exit: pinned, scrubbed. Orbs slide diagonally out + shrink,
+        text scatters, and the scroll line stretches downward like the page
+        is being pulled, before the hero releases into the interlude. ---- */
+const heroEls=gsap.utils.toArray('[data-hero]');
+const scatter=[
+  {x:-260,y:-120,rot:-8},
+  {x:300,y:-60,rot:6},
+  {x:-220,y:140,rot:5},
+  {x:260,y:180,rot:-6},
+  {x:0,y:260,rot:0}
+];
+
+// keep the scroll hint horizontally centered while GSAP drives its transform
+gsap.set('.scroll-hint',{xPercent:-50});
+
+const heroExit=gsap.timeline({
+  scrollTrigger:{
+    trigger:'.hero',
+    start:'top top',
+    end:'+=135%',
+    scrub:1,
+    pin:true,
+    pinSpacing:true,
+    anticipatePin:1
+  }
+});
+
+// orbs leave diagonally while shrinking
+heroExit.fromTo('.orb-blue',
+  {x:0,y:0,scale:1},
+  {x:480,y:-460,scale:0.15,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+heroExit.fromTo('.orb-gold',
+  {x:0,y:0,scale:1},
+  {x:-460,y:480,scale:0.15,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+
+// text scatters away (fromTo + immediateRender:false so it returns when scrolling back up)
+heroEls.forEach((el,i)=>{
+  const s=scatter[i%scatter.length];
+  heroExit.fromTo(el,
+    {x:0,y:0,rotation:0,opacity:1},
+    {x:s.x,y:s.y,rotation:s.rot,opacity:0,ease:'power2.in',duration:1,immediateRender:false},0);
+});
+
+// the "Scroll" label fades, then the blue line grows UPWARD (bottom anchored)
+// until it's vertically centered, then the whole line shifts up and off-screen.
+const LINE_BASE=46, LINE_BOTTOM_GAP=28; // px; keeps equal padding top & bottom when centered
+heroExit.to('.scroll-hint span',{opacity:0,ease:'power1.in',duration:0.3,immediateRender:false},0);
+heroExit.to('.scroll-line',{
+  scaleY:()=> Math.max(1,(window.innerHeight - LINE_BOTTOM_GAP*2)/LINE_BASE),
+  transformOrigin:'bottom center', ease:'power1.inOut', duration:1, immediateRender:false
+},0);
+heroExit.to('.scroll-line',{
+  y:()=> -(window.innerHeight), ease:'power1.in', duration:0.6, immediateRender:false
+},1.0);
+
+/* ---- Interlude: orb + words start the moment the section is entered.
+        Lines stay visible once revealed — no exit. ---- */
+const ilLines=gsap.utils.toArray('.interlude-content p');
+const ilTl=gsap.timeline({
+  scrollTrigger:{ trigger:'.interlude', start:'top top', end:'bottom bottom', scrub:1 }
+});
+ilTl.to('#ilOrb',{opacity:1,duration:1.5},0);
+ilLines.forEach((line,i)=>{
+  ilTl.fromTo(line,{opacity:0,y:45},{opacity:1,y:0,duration:1,ease:'power2.out'}, i*1.1);
+});
+
+/* ---- Generic .reveal fade-up ---- */
+function bindReveals(){
+  gsap.utils.toArray('.reveal').forEach(el=>{
+    gsap.fromTo(el,{opacity:0,y:28},{
+      opacity:1,y:0,duration:1,ease:'power3.out',
+      scrollTrigger:{ trigger:el, start:'top 85%', once:true }
+    });
+  });
+}
+
+/* =========================================================
+   BUILD PROJECTS
+========================================================= */
+const projRight=document.getElementById('projRight');
+const dotNav=document.getElementById('dotNav');
+
+PROJECTS.forEach((p,i)=>{
+  // right entry
+  const entry=document.createElement('article');
+  entry.className='proj-entry';
+  entry.dataset.index=i;
+  entry.innerHTML=`
+    <div class="pe-index">0${i+1}</div>
+    <h3 class="pe-title">${p.title}</h3>
+    <p class="pe-summary">${p.summary}</p>
+    <div class="pe-stat">${p.result}</div>
+    <a href="#" class="pe-mobile-cta" data-modal="${i}">View Full Story →</a>
+  `;
+  projRight.appendChild(entry);
+
+  // dot
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  dotNav.appendChild(d);
+});
+
+const dots=[...dotNav.children];
+
+// left panel refs
+const pvEmoji=document.getElementById('pvEmoji');
+const pvGlow=document.getElementById('pvGlow');
+const pvWatermark=document.getElementById('pvWatermark');
+const pmYear=document.getElementById('pmYear');
+const pmTitle=document.getElementById('pmTitle');
+const pmSummary=document.getElementById('pmSummary');
+const pmResult=document.getElementById('pmResult');
+const pmTags=document.getElementById('pmTags');
+const pmCta=document.getElementById('pmCta');
+const counterNum=document.getElementById('counterNum');
+
+let activeIndex=0;
+
+function setPanel(i,direction){
+  const p=PROJECTS[i];
+  // clip-path wipe on the visual
+  const fromInset = direction==='down' ? 'inset(100% 0 0 0)' : 'inset(0 0 100% 0)';
+  pvEmoji.style.clipPath=fromInset;
+  // populate
+  pvEmoji.textContent=p.emoji;
+  pvGlow.style.background=p.accent;
+  pvWatermark.textContent=p.year;
+  pvWatermark.style.color=`color-mix(in srgb, ${p.accentRaw} 10%, transparent)`;
+  pmYear.textContent=p.year;
+  pmYear.style.color=p.accent;
+  pmTitle.textContent=p.title;
+  pmSummary.textContent=p.summary;
+  pmResult.textContent=p.result;
+  pmTags.innerHTML=p.tags.map(t=>`<span>${t}</span>`).join('');
+  pmCta.dataset.modal=i;
+  counterNum.textContent='0'+(i+1);
+  // animate wipe back open
+  requestAnimationFrame(()=>{ pvEmoji.style.clipPath='inset(0 0 0 0)'; });
+  // dots
+  dots.forEach((d,di)=>d.classList.toggle('active',di===i));
+}
+
+/* Drive active project by whichever entry is closest to viewport center */
+const entries=[...projRight.children];
+
+function updateActive(){
+  const mid=window.innerHeight/2;
+  let best=0, bestDist=Infinity;
+  entries.forEach((e,i)=>{
+    const r=e.getBoundingClientRect();
+    const c=r.top+r.height/2;
+    const d=Math.abs(c-mid);
+    if(d<bestDist){ bestDist=d; best=i; }
+  });
+  if(best!==activeIndex){
+    const dir = best>activeIndex ? 'down' : 'up';
+    setPanel(best,dir);
+    activeIndex=best;
+    entries.forEach(e=>e.classList.toggle('active', +e.dataset.index===best));
+  }
+}
+
+let activeTick=false;
+window.addEventListener('scroll',()=>{
+  if(!activeTick){ activeTick=true; requestAnimationFrame(()=>{ updateActive(); activeTick=false; }); }
+});
+window.addEventListener('resize',updateActive);
+
+// init panel
+setPanel(0,'down');
+entries[0].classList.add('active');
+
+/* Projects section entrance: left + right together */
+gsap.fromTo('.proj-left',{opacity:0,y:40},{
+  opacity:1,y:0,duration:1.1,ease:'power3.out',
+  scrollTrigger:{ trigger:'.projects-grid', start:'top 75%', once:true }
+});
+gsap.fromTo('.proj-entry',{opacity:0,y:40},{
+  opacity:1,y:0,duration:1,ease:'power3.out',stagger:0.06,
+  scrollTrigger:{ trigger:'.projects-grid', start:'top 75%', once:true }
+});
+
+/* =========================================================
+   MODAL
+========================================================= */
+const modal=document.getElementById('modal');
+const modalYear=document.getElementById('modalYear');
+const modalTitle=document.getElementById('modalTitle');
+const modalOverview=document.getElementById('modalOverview');
+const modalAchievements=document.getElementById('modalAchievements');
+const modalLearnings=document.getElementById('modalLearnings');
+
+function openModal(i){
+  const p=PROJECTS[i];
+  modalYear.textContent=p.year;
+  modalYear.style.color=p.accent;
+  modalTitle.textContent=p.title;
+  modalOverview.textContent=p.detail.overview;
+  modalAchievements.innerHTML=p.detail.achievements.map(a=>`<li>${a}</li>`).join('');
+  modalLearnings.textContent=p.detail.learnings;
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  modal.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-modal]');
+  if(t){ e.preventDefault(); openModal(+t.dataset.modal); }
+});
+document.getElementById('modalClose').addEventListener('click',closeModal);
+modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+/* init reveals after layout */
+bindReveals();
+ScrollTrigger.refresh();
+</script>
+</body>
+</html>
