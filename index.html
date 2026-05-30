@@ -106,7 +106,7 @@
     pointer-events:none; user-select:none;
   }
   #scrollThumb.wide #scrollLabel{ color:rgba(234,229,221,.82); }
-  @media(max-width:640px){ #scrollBar{ display:none; } }
+  /* scroll indicator visible on all screen sizes */
 
   /* ---------- Nav ---------- */
   nav{
@@ -282,20 +282,40 @@
   .proj-entry.active .pe-title{ transform:translateX(14px); color:var(--fg); }
   .pe-summary{ display:none; color:var(--mid); font-size:1rem; line-height:1.7; max-width:90%; margin:18px 0 16px; }
   .pe-stat{ display:none; font-family:var(--serif); font-style:italic; font-size:1.2rem; color:var(--gold); }
+  .pe-expand{ display:none; } /* visible only on mobile via media query */
   @media(max-width:960px){
     .projects-grid{ grid-template-columns:1fr; gap:0; }
     .proj-left{ display:none; }
     .proj-right{ padding-top:0; padding-bottom:16vh; }
-    .proj-entry{ min-height:auto; padding:44px 0; }
+    .proj-entry{ min-height:auto; padding:40px 0; }
     .proj-entry.active .pe-title{ transform:none; }
     .pe-index{ display:block; }
-    .pe-summary,.pe-stat{ display:block; }
+    /* accordion expand — hidden until active */
+    .pe-expand{
+      display:grid; grid-template-rows:0fr;
+      transition:grid-template-rows .72s cubic-bezier(0.32,0,0.12,1);
+    }
+    .pe-expand-inner{ overflow:hidden; min-height:0; padding-top:0; transition:padding-top .65s cubic-bezier(0.32,0,0.12,1); }
+    .proj-entry.active .pe-expand{ grid-template-rows:1fr; }
+    .proj-entry.active .pe-expand-inner{ padding-top:20px; }
+    /* expanded content styles */
+    .pe-year-mobile{ font-size:.78rem; letter-spacing:.22em; text-transform:uppercase; color:var(--blue); margin-bottom:14px; }
+    .pe-summary{ display:block; }
+    .pe-result-mobile{ border-left:2px solid var(--gold); padding:3px 0 3px 16px; margin:14px 0 18px; }
+    .pe-result-label{ font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:4px; }
+    .pe-result-val{ font-family:var(--serif); font-style:italic; font-size:1.1rem; color:var(--fg); display:block; }
+    .pe-tags-mobile{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+    .pe-tags-mobile span{ font-size:.7rem; letter-spacing:.08em; color:var(--mid); padding:5px 12px; border:1px solid rgba(234,229,221,.13); border-radius:30px; }
     .pe-mobile-cta{ display:inline-flex; }
   }
   .pe-mobile-cta{
-    display:none; align-items:center; gap:8px; text-decoration:none;
-    color:var(--blue); font-size:.88rem; margin-top:20px;
+    display:none; align-items:center; justify-content:center; gap:8px;
+    text-decoration:none; color:var(--blue); font-size:.88rem; margin-top:4px;
+    padding:13px 20px; border:1px solid rgba(91,156,246,.3); border-radius:6px;
+    width:100%; box-sizing:border-box; letter-spacing:.04em;
+    transition:background .3s var(--ease), border-color .3s var(--ease);
   }
+  .pe-mobile-cta:hover{ background:rgba(91,156,246,.07); border-color:rgba(91,156,246,.7); }
 
   /* ---------- Modal ---------- */
   .modal-overlay{
@@ -694,9 +714,18 @@ PROJECTS.forEach((p,i)=>{
   entry.innerHTML=`
     <div class="pe-index">0${i+1}</div>
     <h3 class="pe-title">${p.title}</h3>
-    <p class="pe-summary">${p.summary}</p>
-    <div class="pe-stat">${p.result}</div>
-    <a href="#" class="pe-mobile-cta" data-modal="${i}">View Full Story →</a>
+    <div class="pe-expand">
+      <div class="pe-expand-inner">
+        <div class="pe-year-mobile">${p.year}</div>
+        <p class="pe-summary">${p.summary}</p>
+        <div class="pe-result-mobile">
+          <span class="pe-result-label">Key Result</span>
+          <span class="pe-result-val">${p.result}</span>
+        </div>
+        <div class="pe-tags-mobile">${p.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+        <a href="#" class="pe-mobile-cta" data-modal="${i}">View More</a>
+      </div>
+    </div>
   `;
   projRight.appendChild(entry);
   const d=document.createElement('div');
@@ -713,7 +742,7 @@ const pmSummary=document.getElementById('pmSummary');
 const pmResult=document.getElementById('pmResult');
 const pmTags=document.getElementById('pmTags');
 const counterNum=document.getElementById('counterNum');
-let activeIndex=0;
+let activeIndex=-1;
 
 function setPanel(i){
   const p=PROJECTS[i];
@@ -732,17 +761,29 @@ function setPanel(i){
 
 const entries=[...projRight.children];
 function updateActive(){
-  const mid=window.innerHeight/2;
-  let best=0,bestDist=Infinity;
-  entries.forEach((e,i)=>{
-    const r=e.getBoundingClientRect();
-    const d=Math.abs(r.top+r.height/2-mid);
-    if(d<bestDist){bestDist=d;best=i;}
-  });
+  const mobile=window.innerWidth<=960;
+  let best=-1;
+  if(mobile){
+    /* threshold: activate the last entry whose top has crossed 42% of viewport */
+    const line=window.innerHeight*0.42;
+    entries.forEach((e,i)=>{
+      if(e.getBoundingClientRect().top<=line) best=i;
+    });
+  } else {
+    /* desktop: entry whose centre is closest to viewport mid */
+    const mid=window.innerHeight/2;
+    let bestDist=Infinity;
+    entries.forEach((e,i)=>{
+      const r=e.getBoundingClientRect();
+      const d=Math.abs(r.top+r.height/2-mid);
+      if(d<bestDist){bestDist=d;best=i;}
+    });
+    if(best===-1) best=0;
+  }
   if(best!==activeIndex){
-    setPanel(best);
     activeIndex=best;
     entries.forEach(e=>e.classList.toggle('active',+e.dataset.index===best));
+    if(!mobile && best>=0) setPanel(best);
   }
 }
 let activeTick=false;
@@ -750,8 +791,8 @@ window.addEventListener('scroll',()=>{
   if(!activeTick){activeTick=true;requestAnimationFrame(()=>{updateActive();activeTick=false;});}
 });
 window.addEventListener('resize',updateActive);
-setPanel(0);
-entries[0].classList.add('active');
+/* desktop only: show first project active on load */
+if(window.innerWidth>960){ activeIndex=0; setPanel(0); entries[0].classList.add('active'); }
 
 gsap.fromTo('.proj-left',{opacity:0,y:40},{
   opacity:1,y:0,duration:1.1,ease:'power3.out',
